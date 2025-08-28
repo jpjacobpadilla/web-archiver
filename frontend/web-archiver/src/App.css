@@ -11,8 +11,8 @@ html, body, #root {
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  background-color: #fafafa;
-  color: #1a1a1a;
+  background-color: #eeefd3;
+  color: #003738;
   line-height: 1.5;
   overflow: hidden;
 }
@@ -26,8 +26,8 @@ body {
 
 /* Header */
 header {
-  background: #ffffff;
-  border-bottom: 1px solid #e5e5e5;
+  background: #e8e9bf;
+  border-bottom: 1px solid #00373880;
   padding: 16px 24px;
   flex-shrink: 0;
 }
@@ -35,19 +35,20 @@ header {
 header h1 {
   font-size: 20px;
   font-weight: 600;
-  color: #1a1a1a;
+  color: #003738;
   margin-bottom: 4px;
 }
 
 header p {
   font-size: 14px;
-  color: #666666;
+  color: #003738;
+  opacity: 0.8;
 }
 
 /* Archive Banner */
 .archive-banner {
-  background: #f8f9fa;
-  border-bottom: 1px solid #e5e5e5;
+  background: #d8d958;
+  border-bottom: 1px solid #00373880;
   padding: 12px 24px;
 }
 
@@ -65,18 +66,19 @@ header p {
 }
 
 .nav-btn {
-  background: #ffffff;
-  border: 1px solid #d1d5db;
+  background: #e8e9bf;
+  border: 1px solid #003738;
   border-radius: 6px;
   padding: 8px 16px;
   font-size: 14px;
+  color: #003738;
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .nav-btn:hover:not(:disabled) {
-  background: #f3f4f6;
-  border-color: #9ca3af;
+  background: #d8d958;
+  border-color: #003738;
 }
 
 .nav-btn:disabled {
@@ -85,13 +87,15 @@ header p {
 }
 
 .home-btn {
-  background: #3b82f6;
-  color: white;
-  border-color: #3b82f6;
+  background: #d8d958;
+  color: #003738;
+  border-color: #d8d958;
 }
 
 .home-btn:hover {
-  background: #2563eb;
+  background: #003738;
+  color: #e8e9bf;
+  border-color: #003738;
 }
 
 .archive-info {
@@ -105,12 +109,13 @@ header p {
 .url-info {
   font-size: 14px;
   font-weight: 500;
-  color: #1a1a1a;
+  color: #003738;
 }
 
 .date-info {
   font-size: 12px;
-  color: #666666;
+  color: #003738;
+  opacity: 0.8;
 }
 
 /* Main Content */
@@ -119,13 +124,13 @@ main {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  background: #fafafa;
+  background: #eeefd3;
 }
 
 /* Archive Form Section */
 .archive-section {
-  background: #ffffff;
-  border-bottom: 1px solid #e5e5e5;
+  background: #e8e9bf;
+  border-bottom: 1px solid #00373880;
   padding: 20px 24px;
   flex-shrink: 0;
 }
@@ -134,7 +139,7 @@ main {
   font-size: 16px;
   font-weight: 600;
   margin-bottom: 12px;
-  color: #1a1a1a;
+  color: #003738;
 }
 
 .archive-form {
@@ -146,32 +151,35 @@ main {
 .archive-form input {
   flex: 1;
   padding: 10px 14px;
-  border: 1px solid #d1d5db;
+  border: 1px solid #00373880;
   border-radius: 6px;
   font-size: 14px;
-  background: #ffffff;
+  background: #eeefd3;
+  color: #003738;
 }
 
 .archive-form input:focus {
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+  border-color: #4dbd97;
+  box-shadow: 0 0 0 2px rgba(77, 189, 151, 0.2);
 }
 
 .archive-form button {
   padding: 10px 20px;
-  background: #3b82f6;
-  color: white;
-  border: none;
+  background: #d8d958;
+  color: #003738;
+  border: 1px solid #d8d958;
   border-radius: 6px;
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
-  transition: background 0.15s ease;
+  transition: all 0.15s ease;
 }
 
 .archive-form button:hover:not(:disabled) {
-  background: #2563eb;
+  background: #003738;
+  color: #e8e9bf;
+  border-color: #003738;
 }
 
 .archive-form button:disabled {
@@ -189,8 +197,8 @@ main {
 /* Sites Sidebar */
 .sites-sidebar {
   width: 300px;
-  background: #ffffff;
-  border-right: 1px solid #e5e5e5;
+  background: #e8e9bf;
+  border-right: 1px solid #00373880;
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
@@ -200,14 +208,15 @@ main {
   padding: 20px 20px 16px;
   font-size: 16px;
   font-weight: 600;
-  color: #1a1a1a;
-  border-bottom: 1px solid #f3f4f6;
+  color: #003738;
+  border-bottom: 1px solid #00373880;
 }
 
 .sites-sidebar p {
   padding: 20px;
   font-size: 14px;
-  color: #666666;
+  color: #003738;
+  opacity: 0.8;
   text-align: center;
 }
 
@@ -219,25 +228,25 @@ main {
 
 .sites-list li {
   padding: 16px 20px;
-  border-bottom: 1px solid #f3f4f6;
+  border-bottom: 1px solid #00373880;
   cursor: pointer;
   transition: background 0.15s ease;
 }
 
 .sites-list li:hover {
-  background: #f8f9fa;
+  background: #d8d958;
 }
 
 .sites-list li.selected {
-  background: #eff6ff;
-  border-right: 2px solid #3b82f6;
+  background: #4dbd97;
+  border-right: 2px solid #003738;
 }
 
 .site-info strong {
   display: block;
   font-size: 14px;
   font-weight: 500;
-  color: #1a1a1a;
+  color: #003738;
   margin-bottom: 4px;
 }
 
@@ -249,7 +258,8 @@ main {
 
 .site-meta small {
   font-size: 12px;
-  color: #666666;
+  color: #003738;
+  opacity: 0.8;
 }
 
 /* Site Details */
@@ -257,7 +267,7 @@ main {
   flex: 1;
   display: flex;
   flex-direction: column;
-  background: #ffffff;
+  background: #e8e9bf;
   overflow: hidden;
 }
 
@@ -266,29 +276,31 @@ main {
   align-items: center;
   justify-content: space-between;
   padding: 20px 24px;
-  border-bottom: 1px solid #f3f4f6;
+  border-bottom: 1px solid #00373880;
 }
 
 .site-header h2 {
   font-size: 18px;
   font-weight: 600;
-  color: #1a1a1a;
+  color: #003738;
 }
 
 .re-archive-btn {
   padding: 8px 16px;
-  background: #10b981;
-  color: white;
-  border: none;
+  background: #003738;
+  color: #e8e9bf;
+  border: 1px solid #003738;
   border-radius: 6px;
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
-  transition: background 0.15s ease;
+  transition: all 0.15s ease;
 }
 
 .re-archive-btn:hover:not(:disabled) {
-  background: #059669;
+  background: #d8d958;
+  color: #003738;
+  border-color: #d8d958;
 }
 
 .re-archive-btn:disabled {
@@ -299,29 +311,30 @@ main {
 /* Job Selector */
 .job-selector {
   padding: 20px 24px;
-  border-bottom: 1px solid #f3f4f6;
+  border-bottom: 1px solid #00373880;
 }
 
 .job-selector h3 {
   font-size: 14px;
   font-weight: 600;
-  color: #1a1a1a;
+  color: #003738;
   margin-bottom: 8px;
 }
 
 .job-selector select {
   width: 100%;
   padding: 8px 12px;
-  border: 1px solid #d1d5db;
+  border: 1px solid #00373880;
   border-radius: 6px;
   font-size: 14px;
-  background: #ffffff;
+  background: #eeefd3;
+  color: #003738;
 }
 
 .job-selector select:focus {
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+  border-color: #4dbd97;
+  box-shadow: 0 0 0 2px rgba(77, 189, 151, 0.2);
 }
 
 /* Pages Section */
@@ -336,7 +349,7 @@ main {
   padding: 20px 24px 16px;
   font-size: 14px;
   font-weight: 600;
-  color: #1a1a1a;
+  color: #003738;
 }
 
 .pages-list {
@@ -351,8 +364,8 @@ main {
 }
 
 .page-info {
-  background: #f8f9fa;
-  border: 1px solid #e5e5e5;
+  background: #eeefd3;
+  border: 1px solid #00373880;
   border-radius: 6px;
   overflow: hidden;
 }
@@ -365,19 +378,19 @@ main {
   border: none;
   text-align: left;
   font-size: 14px;
-  color: #3b82f6;
+  color: #4dbd97;
   cursor: pointer;
   transition: background 0.15s ease;
   word-break: break-all;
 }
 
 .page-link:hover {
-  background: #eff6ff;
+  background: #d8d958;
 }
 
 .page-meta {
   padding: 8px 16px;
-  border-top: 1px solid #e5e5e5;
+  border-top: 1px solid #00373880;
   display: flex;
   gap: 12px;
   align-items: center;
@@ -393,24 +406,25 @@ main {
 }
 
 .status-success {
-  background-color: #dcfce7;
-  color: #166534;
+  background-color: #4dbd97;
+  color: #003738;
 }
 
 .status-redirect {
-  background-color: #fef3c7;
-  color: #92400e;
+  background-color: #d8d958;
+  color: #003738;
 }
 
 .status-error {
-  background-color: #fee2e2;
-  color: #991b1b;
+  background-color: #003738;
+  color: #e8e9bf;
 }
 
 .content-type,
 .content-length {
   font-size: 11px;
-  color: #666666;
+  color: #003738;
+  opacity: 0.8;
 }
 
 /* No Selection State */
@@ -427,19 +441,20 @@ main {
 .no-selection h2 {
   font-size: 18px;
   font-weight: 600;
-  color: #1a1a1a;
+  color: #003738;
   margin-bottom: 8px;
 }
 
 .no-selection p {
   font-size: 14px;
-  color: #666666;
+  color: #003738;
+  opacity: 0.8;
 }
 
 /* Iframe Container */
 .iframe-container {
   flex: 1;
-  background: #ffffff;
+  background: #eeefd3;
 }
 
 .archived-page-frame {
@@ -461,11 +476,11 @@ main {
 
 .sites-list::-webkit-scrollbar-thumb,
 .pages-list::-webkit-scrollbar-thumb {
-  background: #d1d5db;
+  background: #00373880;
   border-radius: 3px;
 }
 
 .sites-list::-webkit-scrollbar-thumb:hover,
 .pages-list::-webkit-scrollbar-thumb:hover {
-  background: #9ca3af;
+  background: #003738;
 }
