@@ -563,3 +563,25 @@ main {
 }
 
 
+
+.job-selector select {
+  width: 100%;
+  height: 40px;
+  padding: 0 40px 0 12px; /* leave room on right for arrow */
+  border: 1px solid #00373880;
+  border-radius: 6px;
+  font-size: 14px;
+  background: #eeefd3;
+  color: #003738;
+
+  /* remove default arrows */
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+
+  /* add a simple custom arrow */
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path fill='%23003738' d='M1 1l5 5 5-5'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 12px 8px;
+}
