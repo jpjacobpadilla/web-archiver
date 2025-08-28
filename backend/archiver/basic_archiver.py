@@ -131,7 +131,7 @@ class BasicArchiver:
         if not self.same_domain(final_url):
             return
 
-        print(resp.status_code)
+        print(f'Crawled page: {url} - Status code: {resp.status}')
 
         ctype = (resp.headers.get('content-type') or '').lower()
         is_html = 'text/html' in ctype and resp.status_code == 200

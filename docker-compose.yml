@@ -24,6 +24,8 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     container_name: archive_frontend
+    environment:
+      NGINX_WORKER_PROCESSES: "1"
     depends_on:
       - api
     ports:

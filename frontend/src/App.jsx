@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
 
-const API_BASE = 'http://localhost:8000';
+const API_BASE = 'http://localhost:8000/api';
 
 function App() {
   const [archivedSites, setArchivedSites] = useState([]);
@@ -13,7 +13,6 @@ function App() {
   const [isArchiving, setIsArchiving] = useState(false);
   const [viewingPage, setViewingPage] = useState(null);
 
-  // NEW: max pages slider state
   const [maxPages, setMaxPages] = useState(25);
 
   useEffect(() => {
