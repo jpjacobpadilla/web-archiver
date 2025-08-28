@@ -14,24 +14,15 @@ pool = AsyncConnectionPool(PG_URI, open=False)
 
 class BasicArchiver:
     # CSS url(...) finder (ignores data: and about:)
-    CSS_URL_RE = re.compile(
-        r"url\(\s*(['\"]?)(?!data:)(?!about:)([^'\"\)]*)\1\s*\)",
-        re.IGNORECASE
-    )
+    CSS_URL_RE = re.compile(r"url\(\s*(['\"]?)(?!data:)(?!about:)([^'\"\)]*)\1\s*\)", re.IGNORECASE)
 
-    def __init__(
-            self,
-            pg_pool: AsyncConnectionPool,
-            url: str,
-            num_workers: int = 5,
-            max_pages: int = 10
-    ):
+    def __init__(self, pg_pool: AsyncConnectionPool, url: str, num_workers: int = 5, max_pages: int = 10):
         self.pg_pool = pg_pool
         self.num_workers = num_workers
         self.url = url
         self.max_pages = max_pages
 
-        self.url_queue: "asyncio.Queue[str]" = asyncio.Queue()
+        self.url_queue: 'asyncio.Queue[str]' = asyncio.Queue()
         self.seen: Set[str] = set()
         self.total_links_seen = 0
         self.start_time = datetime.now()
@@ -47,7 +38,7 @@ class BasicArchiver:
 
     def same_domain(self, u: str) -> bool:
         p = urllib.parse.urlparse(u)
-        return p.scheme in {"http", "https"} and p.netloc.lower() == self._allowed_netloc
+        return p.scheme in {'http', 'https'} and p.netloc.lower() == self._allowed_netloc
 
     @staticmethod
     def abs_url(base: str, u: Optional[str]) -> Optional[str]:
@@ -59,21 +50,21 @@ class BasicArchiver:
 
     @staticmethod
     def classify_type(content_type: Optional[str], url: str) -> str:
-        ct = (content_type or "").split(";")[0].strip().lower()
-        ext = url.rsplit(".", 1)[-1].lower() if "." in url else ""
-        if ct == "text/html" or ext in {"html", "htm", "php", "asp", "aspx"}:
-            return "html"
-        if ct == "text/css" or ext == "css":
-            return "css"
-        if ct in {"application/javascript", "text/javascript"} or ext in {"js", "mjs"}:
-            return "js"
-        if ct.startswith("image/") or ext in {"png", "jpg", "jpeg", "gif", "svg", "webp", "bmp", "ico"}:
-            return "image"
-        if ct.startswith("video/") or ext in {"mp4", "webm", "ogg", "mov", "mkv"}:
-            return "video"
-        if ct.startswith("font/") or ext in {"woff", "woff2", "ttf", "otf", "eot"}:
-            return "font"
-        return "other"
+        ct = (content_type or '').split(';')[0].strip().lower()
+        ext = url.rsplit('.', 1)[-1].lower() if '.' in url else ''
+        if ct == 'text/html' or ext in {'html', 'htm', 'php', 'asp', 'aspx'}:
+            return 'html'
+        if ct == 'text/css' or ext == 'css':
+            return 'css'
+        if ct in {'application/javascript', 'text/javascript'} or ext in {'js', 'mjs'}:
+            return 'js'
+        if ct.startswith('image/') or ext in {'png', 'jpg', 'jpeg', 'gif', 'svg', 'webp', 'bmp', 'ico'}:
+            return 'image'
+        if ct.startswith('video/') or ext in {'mp4', 'webm', 'ogg', 'mov', 'mkv'}:
+            return 'video'
+        if ct.startswith('font/') or ext in {'woff', 'woff2', 'ttf', 'otf', 'eot'}:
+            return 'font'
+        return 'other'
 
     async def run(self):
         async with self.pg_pool.connection() as conn:
@@ -132,11 +123,11 @@ class BasicArchiver:
 
         print(resp.status_code)
 
-        ctype = (resp.headers.get("content-type") or "").lower()
-        is_html = "text/html" in ctype and resp.status_code == 200
+        ctype = (resp.headers.get('content-type') or '').lower()
+        is_html = 'text/html' in ctype and resp.status_code == 200
 
         if is_html:
-            pages, assets = await self.parse_links(base=final_url, text=resp.text or "")
+            pages, assets = await self.parse_links(base=final_url, text=resp.text or '')
             await self.on_found_links(pages | assets)
 
         await self.archive_content(resp, source_url=final_url)
@@ -147,13 +138,13 @@ class BasicArchiver:
         link = resp.url or source_url
 
         params = {
-            "link": link,
-            "host": urllib.parse.urlparse(link).netloc.lower(),
-            "status_code": resp.status_code,
-            "content_type": headers.get("content-type"),
-            "content": content,
-            "content_length": len(content),
-            "scraping_job": self.job_id,
+            'link': link,
+            'host': urllib.parse.urlparse(link).netloc.lower(),
+            'status_code': resp.status_code,
+            'content_type': headers.get('content-type'),
+            'content': content,
+            'content_length': len(content),
+            'scraping_job': self.job_id,
         }
 
         sql = """
@@ -177,7 +168,7 @@ class BasicArchiver:
         assets: Set[str] = set()
 
         try:
-            doc = lxml_html.fromstring(text or "")
+            doc = lxml_html.fromstring(text or '')
         except Exception:
             return pages, assets
 
@@ -185,18 +176,20 @@ class BasicArchiver:
         doc.make_links_absolute(base, resolve_base_href=True)
 
         # 1) Page links (<a href>)
-        for el in doc.xpath("//a[@href]"):
-            u = self.abs_url(base, el.get("href"))
+        for el in doc.xpath('//a[@href]'):
+            u = self.abs_url(base, el.get('href'))
             if u and self.same_domain(u):
                 pages.add(u)
 
         # 2) Asset links
         # img/src, poster, script/src, iframe/src, embed/src, audio/src, video/src, source/src, track/src
         asset_xpaths = [
-            ("src",
-             "//img[@src] | //script[@src] | //iframe[@src] | //embed[@src] | //audio[@src] | //video[@src] | //source[@src] | //track[@src]"),
-            ("poster", "//video[@poster]"),
-            ("href", "//link[@href]"),  # stylesheets, icons, preloads, etc.
+            (
+                'src',
+                '//img[@src] | //script[@src] | //iframe[@src] | //embed[@src] | //audio[@src] | //video[@src] | //source[@src] | //track[@src]',
+            ),
+            ('poster', '//video[@poster]'),
+            ('href', '//link[@href]'),  # stylesheets, icons, preloads, etc.
         ]
         for attr, xp in asset_xpaths:
             for el in doc.xpath(xp):
@@ -205,25 +198,25 @@ class BasicArchiver:
                     assets.add(u)
 
         # 3) srcset (img/source)
-        for el in doc.xpath("//img[@srcset] | //source[@srcset]"):
-            srcset = el.get("srcset") or ""
-            for cand in srcset.split(","):
-                part = cand.strip().split()[0] if cand.strip() else ""
+        for el in doc.xpath('//img[@srcset] | //source[@srcset]'):
+            srcset = el.get('srcset') or ''
+            for cand in srcset.split(','):
+                part = cand.strip().split()[0] if cand.strip() else ''
                 u = self.abs_url(base, part)
                 if u and self.same_domain(u):
                     assets.add(u)
 
         # 4) Inline style attributes: url(...)
-        for el in doc.xpath("//*[@style]"):
-            style_val = el.get("style") or ""
+        for el in doc.xpath('//*[@style]'):
+            style_val = el.get('style') or ''
             for m in self.CSS_URL_RE.finditer(style_val):
                 u = self.abs_url(base, m.group(2).strip())
                 if u and self.same_domain(u):
                     assets.add(u)
 
         # 5) <style> blocks: url(...)
-        for el in doc.xpath("//style"):
-            css_text = el.text or ""
+        for el in doc.xpath('//style'):
+            css_text = el.text or ''
             for m in self.CSS_URL_RE.finditer(css_text):
                 u = self.abs_url(base, m.group(2).strip())
                 if u and self.same_domain(u):
@@ -247,7 +240,7 @@ class BasicArchiver:
         if self.total_links_seen >= self.max_pages:
             return
         p = urllib.parse.urlparse(url)
-        if p.scheme not in {"http", "https"}:
+        if p.scheme not in {'http', 'https'}:
             return
         if p.netloc.lower() != self._allowed_netloc:
             return
@@ -260,7 +253,7 @@ async def main():
 
     archiver = BasicArchiver(
         pg_pool=pool,
-        url="https://jacobpadilla.com",
+        url='https://jacobpadilla.com',
         max_pages=50,
         num_workers=8,
     )
@@ -268,5 +261,5 @@ async def main():
     await archiver.run()
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     asyncio.run(main())
