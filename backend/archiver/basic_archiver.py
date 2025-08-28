@@ -48,24 +48,6 @@ class BasicArchiver:
         a, _ = urllib.parse.urldefrag(a)
         return a
 
-    @staticmethod
-    def classify_type(content_type: Optional[str], url: str) -> str:
-        ct = (content_type or '').split(';')[0].strip().lower()
-        ext = url.rsplit('.', 1)[-1].lower() if '.' in url else ''
-        if ct == 'text/html' or ext in {'html', 'htm', 'php', 'asp', 'aspx'}:
-            return 'html'
-        if ct == 'text/css' or ext == 'css':
-            return 'css'
-        if ct in {'application/javascript', 'text/javascript'} or ext in {'js', 'mjs'}:
-            return 'js'
-        if ct.startswith('image/') or ext in {'png', 'jpg', 'jpeg', 'gif', 'svg', 'webp', 'bmp', 'ico'}:
-            return 'image'
-        if ct.startswith('video/') or ext in {'mp4', 'webm', 'ogg', 'mov', 'mkv'}:
-            return 'video'
-        if ct.startswith('font/') or ext in {'woff', 'woff2', 'ttf', 'otf', 'eot'}:
-            return 'font'
-        return 'other'
-
     async def run(self):
         async with self.pg_pool.connection() as conn:
             async with conn.cursor() as cur:
