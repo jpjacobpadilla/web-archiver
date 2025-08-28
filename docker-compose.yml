@@ -21,7 +21,7 @@ services:
 
   web:
     build:
-      context: ./frontend/web-archiver
+      context: ./frontend
       dockerfile: Dockerfile
     container_name: archive_frontend
     depends_on:

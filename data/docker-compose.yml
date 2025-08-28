@@ -1,7 +1,7 @@
 services:
   db:
     image: postgres:17
-    container_name: archive_data
+    container_name: archive_postgres
     restart: always
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-app_db}
