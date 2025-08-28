@@ -186,8 +186,8 @@ function App() {
   return (
     <div className="app">
       <header>
-        <h1>Web Archiver</h1>
-        <p>Archive and browse web pages like the Wayback Machine</p>
+        <h1>Jacob's Web Archiver</h1>
+        <p>Your personal Wayback button for the internet.</p>
 
         {viewingPage && (
           <div className="archive-banner">
