@@ -24,3 +24,6 @@ package-lock.json
 .idea/
 .vscode/
 logs/
+
+# Postgres
+data/data
