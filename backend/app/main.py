@@ -1,3 +1,4 @@
+import os
 import re
 import asyncio
 from pathlib import Path
@@ -48,7 +49,7 @@ app.add_middleware(
 )
 
 # Database connection
-PG_URI = 'postgresql://app_user:dev_password@localhost:5432/app_db'
+PG_URI = os.environ['PG_URI']
 pool = AsyncConnectionPool(PG_URI, open=False)
 
 
