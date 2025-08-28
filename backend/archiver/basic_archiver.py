@@ -1,47 +1,77 @@
-import asyncio
-from datetime import datetime
 import re
+import asyncio
 import urllib.parse
+from datetime import datetime
 from typing import Set, Tuple, Optional
 
 from lxml import html as lxml_html
 from stealth_requests import AsyncStealthSession
 from psycopg_pool import AsyncConnectionPool
 
-PG_URI = 'postgresql://app_user:dev_password@localhost:5432/app_db'
-pool = AsyncConnectionPool(PG_URI, open=False)
+
+# CSS url(...) finder regex
+CSS_URL_RE = re.compile(r"url\(\s*(['\"]?)(?!data:)(?!about:)([^'\"\)]*)\1\s*\)", re.IGNORECASE)
 
 
 class BasicArchiver:
-    # CSS url(...) finder (ignores data: and about:)
-    CSS_URL_RE = re.compile(r"url\(\s*(['\"]?)(?!data:)(?!about:)([^'\"\)]*)\1\s*\)", re.IGNORECASE)
-
-    def __init__(self, pg_pool: AsyncConnectionPool, url: str, num_workers: int = 5, max_pages: int = 10):
+    def __init__(
+        self,
+        pg_pool: AsyncConnectionPool,
+        url: str,
+        num_workers: int = 5,
+        max_pages: int = 10
+    ):
+        """
+        Args:
+            pg_pool: Psycopg connection pool instance
+            url: Starting URL to archive (determines allowed domain)
+            num_workers: Number of concurrent workers for crawling
+            max_pages: Maximum number of pages to archive
+        """
         self.pg_pool = pg_pool
         self.num_workers = num_workers
         self.url = url
         self.max_pages = max_pages
 
-        self.url_queue: 'asyncio.Queue[str]' = asyncio.Queue()
+        self.url_queue: asyncio.Queue[str] = asyncio.Queue()
         self.seen: Set[str] = set()
         self.total_links_seen = 0
         self.start_time = datetime.now()
-        self.job_id: int | None = None
-
-        # Add lock to prevent race conditions on seen set
         self._seen_lock = asyncio.Lock()
-
-        self.session: AsyncStealthSession | None = None
-
-        # Strict same-host policy anchor
         self._allowed_netloc = urllib.parse.urlparse(self.url).netloc.lower()
 
+        self.job_id: int | None = None
+        self.session: AsyncStealthSession | None = None
+
     def same_domain(self, u: str) -> bool:
+        """
+        Check if a URL belongs to the same domain as the initial URL.
+        """
         p = urllib.parse.urlparse(u)
         return p.scheme in {'http', 'https'} and p.netloc.lower() == self._allowed_netloc
 
     @staticmethod
     def abs_url(base: str, u: Optional[str]) -> Optional[str]:
+        """
+        Convert a relative URL to an absolute URL and remove any fragment identifier.
+
+        Args:
+            base: The base URL to resolve relative URLs against
+            u: The URL to convert (can be relative or absolute)
+
+        Returns:
+            The absolute URL with fragment removed, or None if input URL is None/empty
+
+        Examples:
+            abs_url("https://example.com/page", "../style.css")
+            -> "https://example.com/style.css"
+
+            abs_url("https://example.com/", "/contact#section")
+            -> "https://example.com/contact"
+
+            abs_url("https://example.com/", "https://other.com/file.js")
+            -> "https://other.com/file.js"
+        """
         if not u:
             return None
         a = urllib.parse.urljoin(base, u)
@@ -191,7 +221,7 @@ class BasicArchiver:
         # 4) Inline style attributes: url(...)
         for el in doc.xpath('//*[@style]'):
             style_val = el.get('style') or ''
-            for m in self.CSS_URL_RE.finditer(style_val):
+            for m in CSS_URL_RE.finditer(style_val):
                 u = self.abs_url(base, m.group(2).strip())
                 if u and self.same_domain(u):
                     assets.add(u)
@@ -199,7 +229,7 @@ class BasicArchiver:
         # 5) <style> blocks: url(...)
         for el in doc.xpath('//style'):
             css_text = el.text or ''
-            for m in self.CSS_URL_RE.finditer(css_text):
+            for m in CSS_URL_RE.finditer(css_text):
                 u = self.abs_url(base, m.group(2).strip())
                 if u and self.same_domain(u):
                     assets.add(u)
