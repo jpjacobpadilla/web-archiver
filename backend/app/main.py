@@ -2,7 +2,6 @@ import os
 import re
 import asyncio
 from pathlib import Path
-from typing import List, Optional
 from datetime import datetime, timezone
 from contextlib import asynccontextmanager
 from urllib.parse import urlsplit, urlunsplit, quote, unquote
@@ -79,7 +78,7 @@ def _wb_ts_to_iso(ts14: str) -> str:
     return dt.isoformat()
 
 
-def _abs_url(base_host: str, val: str) -> Optional[str]:
+def _abs_url(base_host: str, val: str) -> str | None:
     """Convert relative URLs to absolute URLs for the same host."""
     if not val or val.startswith(('#', 'data:', 'mailto:', 'javascript:')):
         return None
@@ -167,7 +166,7 @@ def _normalize_bytes(raw):
     return bytes(raw)
 
 
-@app.get('/archived-sites', response_model=List[ArchivedSite])
+@app.get('/archived-sites', response_model=list[ArchivedSite])
 async def get_archived_sites():
     """Get all archived sites with their latest archive job."""
     async with pool.connection() as conn:
@@ -185,7 +184,7 @@ async def get_archived_sites():
             ]
 
 
-@app.get('/archived-sites/{host}/jobs', response_model=List[ArchiveJob])
+@app.get('/archived-sites/{host}/jobs', response_model=list[ArchiveJob])
 async def get_site_jobs(host: str):
     """Get all archive jobs for a specific host."""
     async with pool.connection() as conn:
@@ -202,7 +201,7 @@ async def get_site_jobs(host: str):
             ]
 
 
-@app.get('/archived-sites/{host}/jobs/{job_id}/pages', response_model=List[ArchivedPage])
+@app.get('/archived-sites/{host}/jobs/{job_id}/pages', response_model=list[ArchivedPage])
 async def get_job_pages(host: str, job_id: int):
     """Get all archived pages for a specific job."""
     async with pool.connection() as conn:
