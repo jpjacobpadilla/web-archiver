@@ -264,7 +264,7 @@ function App() {
                 />
               </div>
 
-              <button type="submit" disabled={isArchiving}>
+              <button className="standard-button-main" type="submit" disabled={isArchiving}>
                 {isArchiving ? 'Archiving...' : 'Archive Site'}
               </button>
             </form>
@@ -305,7 +305,7 @@ function App() {
                     <button
                       onClick={handleReArchive}
                       disabled={isArchiving}
-                      className="re-archive-btn"
+                      className="standard-button-main"
                     >
                       {isArchiving ? 'Archiving...' : 'Re-Archive'}
                     </button>

@@ -163,7 +163,7 @@ main {
   box-shadow: 0 0 0 2px rgba(77, 189, 151, 0.2);
 }
 
-.archive-form button {
+.standard-button-main {
   padding: 10px 20px;
   background: #d8d958;
   color: #003738;
@@ -175,13 +175,13 @@ main {
   transition: all 0.15s ease;
 }
 
-.archive-form button:hover:not(:disabled) {
+.standard-button-main:hover:not(:disabled) {
   background: #003738;
   color: #e8e9bf;
   border-color: #003738;
 }
 
-.archive-form button:disabled {
+.standard-button-main:disabled {
   opacity: 0.7;
   cursor: not-allowed;
 }
@@ -282,29 +282,6 @@ main {
   font-size: 18px;
   font-weight: 600;
   color: #003738;
-}
-
-.re-archive-btn {
-  padding: 8px 16px;
-  background: #003738;
-  color: #e8e9bf;
-  border: 1px solid #003738;
-  border-radius: 6px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.re-archive-btn:hover:not(:disabled) {
-  background: #d8d958;
-  color: #003738;
-  border-color: #d8d958;
-}
-
-.re-archive-btn:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
 }
 
 /* Job Selector */
