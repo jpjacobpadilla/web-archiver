@@ -192,7 +192,7 @@ function App() {
         {viewingPage && (
           <div className="archive-banner">
             <div className="banner-content">
-              <button onClick={closeArchivedPage} className="nav-btn home-btn">
+              <button onClick={closeArchivedPage} className="nav-btn">
                 Back to Archive List
               </button>
 
