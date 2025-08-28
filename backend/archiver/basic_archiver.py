@@ -2,7 +2,6 @@ import re
 import asyncio
 import urllib.parse
 from datetime import datetime
-from typing import Set, Tuple, Optional
 
 from lxml import html as lxml_html
 from stealth_requests import AsyncStealthSession
@@ -34,7 +33,7 @@ class BasicArchiver:
         self.max_pages = max_pages
 
         self.url_queue: asyncio.Queue[str] = asyncio.Queue()
-        self.seen: Set[str] = set()
+        self.seen: set[str] = set()
         self.total_links_seen = 0
         self.start_time = datetime.now()
         self._seen_lock = asyncio.Lock()
@@ -51,7 +50,7 @@ class BasicArchiver:
         return p.scheme in {'http', 'https'} and p.netloc.lower() == self._allowed_netloc
 
     @staticmethod
-    def abs_url(base: str, u: Optional[str]) -> Optional[str]:
+    def abs_url(base: str, u: str | None) -> str | None:
         """
         Convert a relative URL to an absolute URL and remove any fragment identifier.
 
@@ -78,7 +77,10 @@ class BasicArchiver:
         a, _ = urllib.parse.urldefrag(a)
         return a
 
-    async def run(self):
+    async def run(self) -> None:
+        """
+        Start the archiving process.
+        """
         async with self.pg_pool.connection() as conn:
             async with conn.cursor() as cur:
                 # create a new archive job and return its id
@@ -94,7 +96,6 @@ class BasicArchiver:
         # Seed the queue so workers have something to do
         await self.put_todo(self.url)
 
-        # If AsyncStealthSession is actually async, change to: async with AsyncStealthSession() as session:
         async with AsyncStealthSession() as session:
             self.session = session
 
@@ -105,14 +106,14 @@ class BasicArchiver:
                 worker.cancel()
             await asyncio.gather(*workers, return_exceptions=True)
 
-    async def worker(self):
+    async def worker(self) -> None:
         while True:
             try:
                 await self.process_one()
             except asyncio.CancelledError:
                 return
 
-    async def process_one(self):
+    async def process_one(self) -> None:
         url = await self.url_queue.get()
         try:
             await self.crawl(url)
@@ -121,16 +122,19 @@ class BasicArchiver:
         finally:
             self.url_queue.task_done()
 
-    async def crawl(self, url: str):
-        # light pacing to avoid hammering
+    async def crawl(self, url: str) -> None:
+        """
+        Crawl a single URL and extract links if it's an HTML page.
+
+        Args:
+            url: The URL to crawl
+        """
         await asyncio.sleep(0.1)
 
-        # If get() is async in your lib, make this: resp = await self.session.get(url)
         resp = await self.session.get(url)
 
         final_url = str(resp.url)
         if not self.same_domain(final_url):
-            # Redirected off-domain — drop
             return
 
         print(resp.status_code)
@@ -144,7 +148,17 @@ class BasicArchiver:
 
         await self.archive_content(resp, source_url=final_url)
 
-    async def archive_content(self, resp, source_url: str):
+    async def archive_content(self, resp, source_url: str) -> None:
+        """
+        Store the response content in the database.
+
+        Args:
+            resp: HTTP response object containing headers, content, etc.
+            source_url: Original URL that was requested
+
+        Extracts response data and inserts it into the archived_resource table
+        associated with the current archive job.
+        """
         headers = resp.headers or {}
         content = resp.content
         link = resp.url or source_url
@@ -171,13 +185,24 @@ class BasicArchiver:
                 await cur.execute(sql, params)
                 _row = await cur.fetchone()  # id if you want it
 
-    async def parse_links(self, base: str, text: str) -> Tuple[Set[str], Set[str]]:
+    async def parse_links(self, base: str, text: str) -> tuple[set[str], set[str]]:
         """
-        Parse HTML and return (pages_to_crawl, assets_to_fetch), both same-domain.
-        Uses lxml; normalizes to absolute links and strips fragments.
+        Parse HTML content and extract all links to pages and assets.
+
+        Args:
+            base: Base URL for resolving relative links
+            text: HTML content to parse
+
+        Returns:
+            Tuple of (page_links, asset_links) where both are sets of absolute URLs
+            from the same domain. Pages are from <a> tags, assets are from <img>,
+            <script>, <link>, CSS url(), srcset attributes, etc.
+
+        Uses lxml to parse HTML and extract links from various elements and attributes.
+        Filters out data: URIs, fragments, and off-domain links.
         """
-        pages: Set[str] = set()
-        assets: Set[str] = set()
+        pages: set[str] = set()
+        assets: set[str] = set()
 
         try:
             doc = lxml_html.fromstring(text or '')
@@ -238,40 +263,39 @@ class BasicArchiver:
         assets -= pages
         return pages, assets
 
-    async def on_found_links(self, urls: Set[str]):
-        # Use lock to prevent race conditions when checking/updating seen set
+    async def on_found_links(self, urls: set[str]) -> None:
+        """
+        Process newly discovered URLs and add unseen ones to the crawl queue.
+
+        Args:
+            urls: Set of absolute URLs discovered during parsing
+
+        Uses a lock to prevent race conditions when multiple workers discover
+        the same URLs simultaneously. Only adds URLs that haven't been seen before.
+        """
         async with self._seen_lock:
             new = urls - self.seen
             self.seen.update(new)
 
-        # Queue new URLs (outside the lock since put_todo is already thread-safe)
         for u in new:
             await self.put_todo(u)
 
-    async def put_todo(self, url: str):
+    async def put_todo(self, url: str) -> None:
+        """
+        Add a URL to the crawl queue if it meets criteria.
+
+        Args:
+            url: URL to potentially add to the queue
+
+        Checks if the URL is valid (http/https, same domain) and if we haven't
+        exceeded the max_pages limit before adding it to the queue.
+        """
         if self.total_links_seen >= self.max_pages:
             return
+
         p = urllib.parse.urlparse(url)
-        if p.scheme not in {'http', 'https'}:
+        if p.scheme not in {'http', 'https'} or p.netloc.lower() != self._allowed_netloc:
             return
-        if p.netloc.lower() != self._allowed_netloc:
-            return
+
         self.total_links_seen += 1
         await self.url_queue.put(url)
-
-
-async def main():
-    await pool.open()
-
-    archiver = BasicArchiver(
-        pg_pool=pool,
-        url='https://jacobpadilla.com',
-        max_pages=50,
-        num_workers=8,
-    )
-
-    await archiver.run()
-
-
-if __name__ == '__main__':
-    asyncio.run(main())
