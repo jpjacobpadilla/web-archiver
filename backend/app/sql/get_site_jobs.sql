@@ -5,9 +5,6 @@ select
 from archive_jobs aj
 join archived_resource ar on aj.id = ar.scraping_job
 where ar.host = %(host)s
-  and (
-      ar.content_type like 'text/html%'
-      or ar.content_type = 'text/html'
-  )
+  and ar.content_type like %(ct_prefix)s
 group by aj.id, aj.time_started
 order by aj.time_started desc;

@@ -13,8 +13,9 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 
-from schemas import ArchiveRequest, ArchivedSite, ArchiveJob, ArchivedPage
-from ..archiver import BasicArchiver
+from app.schemas import ArchiveRequest, ArchivedSite, ArchiveJob, ArchivedPage
+from archiver import BasicArchiver
+
 
 
 SQL_DIR = Path(__file__).parent / "sql"
@@ -22,6 +23,7 @@ SQL_GET_ARCHIVED_SITES = (SQL_DIR / "get_archived_sites.sql").read_text(encoding
 SQL_GET_SITE_JOBS = (SQL_DIR / "get_site_jobs.sql").read_text(encoding="utf-8")
 SQL_GET_JOB_PAGES = (SQL_DIR / "get_job_pages.sql").read_text(encoding="utf-8")
 SQL_DEBUG_QUERY = (SQL_DIR / "debug_available_url.sql").read_text(encoding="utf-8")
+SQL_FETCH_CONTENT = (SQL_DIR / "get_content.sql").read_text(encoding="utf-8")
 
 
 @asynccontextmanager
@@ -149,13 +151,7 @@ async def _fetch_from_db(job_id: int, absolute_url: str):
     """Fetch archived resource from database by job ID."""
     async with pool.connection() as conn:
         async with conn.cursor(row_factory=dict_row) as cur:
-            query = """
-                    SELECT content, content_type, host
-                    FROM archived_resource
-                    WHERE scraping_job = %s \
-                      AND link = %s LIMIT 1 \
-                    """
-            await cur.execute(query, (job_id, absolute_url))
+            await cur.execute(SQL_FETCH_CONTENT, {'job_id': job_id, 'link': absolute_url})
             return await cur.fetchone()
 
 
@@ -193,7 +189,10 @@ async def get_site_jobs(host: str):
     """Get all archive jobs for a specific host."""
     async with pool.connection() as conn:
         async with conn.cursor(row_factory=dict_row) as cur:
-            await cur.execute(SQL_GET_SITE_JOBS, {'host': host})
+            await cur.execute(
+                SQL_GET_SITE_JOBS,
+                {"host": host, "ct_prefix": "text/html%"}
+            )
             rows = await cur.fetchall()
             return [
                 ArchiveJob(
@@ -287,7 +286,6 @@ async def trigger_archive(request: ArchiveRequest):
     """
     try:
         loop = asyncio.get_running_loop()
-        # schedule ASAP; don't await
         loop.call_soon(
             loop.create_task,
             run_archive(
