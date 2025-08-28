@@ -1,0 +1,26 @@
+# Secrets
+.env
+
+# Python
+__pycache__/
+*.py[oc]
+*.egg-info/
+build/
+dist/
+build/
+wheels/
+.venv
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+package-lock.json
+
+# Misc
+.DS_Store
+.idea/
+.vscode/
+logs/
