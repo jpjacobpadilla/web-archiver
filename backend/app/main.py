@@ -189,10 +189,7 @@ async def get_site_jobs(host: str):
     """Get all archive jobs for a specific host."""
     async with pool.connection() as conn:
         async with conn.cursor(row_factory=dict_row) as cur:
-            await cur.execute(
-                SQL_GET_SITE_JOBS,
-                {"host": host, "ct_prefix": "text/html%"}
-            )
+            await cur.execute(SQL_GET_SITE_JOBS, {"host": host})
             rows = await cur.fetchall()
             return [
                 ArchiveJob(
