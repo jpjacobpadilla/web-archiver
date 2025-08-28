@@ -1,1 +1,1 @@
-from basic_archiver import BasicArchiver
+from .basic_archiver import BasicArchiver
