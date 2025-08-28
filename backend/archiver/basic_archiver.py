@@ -2,6 +2,7 @@ import re
 import asyncio
 import urllib.parse
 from datetime import datetime
+from pathlib import Path
 
 from lxml import html as lxml_html
 from stealth_requests import AsyncStealthSession
@@ -11,6 +12,9 @@ from psycopg_pool import AsyncConnectionPool
 # CSS url(...) finder regex
 CSS_URL_RE = re.compile(r"url\(\s*(['\"]?)(?!data:)(?!about:)([^'\"\)]*)\1\s*\)", re.IGNORECASE)
 
+SQL_DIR = Path(__file__).parent / "sql"
+SQL_INSERT_JOB = (SQL_DIR / "insert_job.sql").read_text(encoding="utf-8")
+SQL_ARCHIVE_CONTENT = (SQL_DIR / "archive_content.sql").read_text(encoding="utf-8")
 
 class BasicArchiver:
     def __init__(
@@ -84,12 +88,7 @@ class BasicArchiver:
         async with self.pg_pool.connection() as conn:
             async with conn.cursor() as cur:
                 # create a new archive job and return its id
-                await cur.execute(
-                    """
-                    insert into archive_jobs (time_started)
-                    values (CURRENT_TIMESTAMP) returning id
-                    """
-                )
+                await cur.execute(SQL_INSERT_JOB)
                 row = await cur.fetchone()
                 self.job_id = row[0]  # save job id on the instance
 
@@ -173,16 +172,9 @@ class BasicArchiver:
             'scraping_job': self.job_id,
         }
 
-        sql = """
-              insert into archived_resource
-              (link, host, status_code, content_type, content, content_length, scraping_job)
-              values (%(link)s, %(host)s, %(status_code)s, %(content_type)s,
-                      %(content)s, %(content_length)s, %(scraping_job)s) returning id \
-              """
-
         async with self.pg_pool.connection() as conn:
             async with conn.cursor() as cur:
-                await cur.execute(sql, params)
+                await cur.execute(SQL_ARCHIVE_CONTENT, params)
                 _row = await cur.fetchone()  # id if you want it
 
     async def parse_links(self, base: str, text: str) -> tuple[set[str], set[str]]:
