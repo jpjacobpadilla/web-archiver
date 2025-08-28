@@ -10,6 +10,7 @@ from psycopg_pool import AsyncConnectionPool
 from psycopg.rows import dict_row
 from bs4 import BeautifulSoup
 
+
 app = FastAPI(title="Web Archiver API")
 
 # CORS middleware
