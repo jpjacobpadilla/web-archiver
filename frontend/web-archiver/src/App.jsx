@@ -13,6 +13,9 @@ function App() {
   const [isArchiving, setIsArchiving] = useState(false);
   const [viewingPage, setViewingPage] = useState(null);
 
+  // NEW: max pages slider state
+  const [maxPages, setMaxPages] = useState(25);
+
   useEffect(() => {
     fetchArchivedSites();
   }, []);
@@ -73,13 +76,11 @@ function App() {
     try {
       const response = await fetch(`${API_BASE}/archive`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           url: newUrl.trim(),
-          max_pages: 25,
-          num_workers: 8,
+          max_pages: maxPages,        // use slider value
+          num_workers: 12,
         }),
       });
 
@@ -105,19 +106,17 @@ function App() {
     try {
       const response = await fetch(`${API_BASE}/archive`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           url: `https://${selectedSite.host}`,
-          max_pages: 25,
-          num_workers: 8,
+          max_pages: maxPages,        // use slider value
+          num_workers: 12,
         }),
       });
 
       if (response.ok) {
         const result = await response.json();
-        alert(`Re-archive started! Job ID: ${result.job_id}`);
+        alert(`Re-archive started! Job ID: ${result.job_id ?? 'N/A'}`);
         setTimeout(() => fetchSiteJobs(selectedSite.host), 5000);
       } else {
         alert('Failed to start re-archive');
@@ -135,54 +134,46 @@ function App() {
     const url = `${API_BASE}/web/${selectedJob.id}/${encodedUrl}`;
 
     setViewingPage({
-      url: url,
+      url,
       originalUrl: page.link,
       timestamp: selectedJob.time_started,
       host: selectedSite.host,
       jobId: selectedJob.id,
-      currentJobIndex: archiveJobs.findIndex(job => job.id === selectedJob.id)
+      currentJobIndex: archiveJobs.findIndex(job => job.id === selectedJob.id),
     });
   };
 
   const goBackInTime = () => {
     if (!viewingPage || viewingPage.currentJobIndex >= archiveJobs.length - 1) return;
-
     const olderJob = archiveJobs[viewingPage.currentJobIndex + 1];
     const encodedUrl = encodeURIComponent(viewingPage.originalUrl);
     const url = `${API_BASE}/web/${olderJob.id}/${encodedUrl}`;
-
-    setViewingPage({
-      ...viewingPage,
-      url: url,
+    setViewingPage(v => ({
+      ...v,
+      url,
       timestamp: olderJob.time_started,
       jobId: olderJob.id,
-      currentJobIndex: viewingPage.currentJobIndex + 1
-    });
+      currentJobIndex: v.currentJobIndex + 1,
+    }));
   };
 
   const goForwardInTime = () => {
     if (!viewingPage || viewingPage.currentJobIndex <= 0) return;
-
     const newerJob = archiveJobs[viewingPage.currentJobIndex - 1];
     const encodedUrl = encodeURIComponent(viewingPage.originalUrl);
     const url = `${API_BASE}/web/${newerJob.id}/${encodedUrl}`;
-
-    setViewingPage({
-      ...viewingPage,
-      url: url,
+    setViewingPage(v => ({
+      ...v,
+      url,
       timestamp: newerJob.time_started,
       jobId: newerJob.id,
-      currentJobIndex: viewingPage.currentJobIndex - 1
-    });
+      currentJobIndex: v.currentJobIndex - 1,
+    }));
   };
 
-  const closeArchivedPage = () => {
-    setViewingPage(null);
-  };
+  const closeArchivedPage = () => setViewingPage(null);
 
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleString();
-  };
+  const formatDate = (dateString) => new Date(dateString).toLocaleString();
 
   const getStatusColor = (statusCode) => {
     if (!statusCode) return '';
@@ -255,6 +246,24 @@ function App() {
                 required
                 disabled={isArchiving}
               />
+
+              {/* NEW: How many pages slider */}
+              <div className="range-wrap">
+                <label htmlFor="max-pages" className="range-label">
+                  How many pages: <span className="range-value">{maxPages}</span>
+                </label>
+                <input
+                  id="max-pages"
+                  type="range"
+                  min={10}
+                  max={1000}
+                  step={10}
+                  value={maxPages}
+                  onChange={(e) => setMaxPages(parseInt(e.target.value, 10))}
+                  disabled={isArchiving}
+                />
+              </div>
+
               <button type="submit" disabled={isArchiving}>
                 {isArchiving ? 'Archiving...' : 'Archive Site'}
               </button>

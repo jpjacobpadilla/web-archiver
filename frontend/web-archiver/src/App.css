@@ -48,7 +48,6 @@ header p {
 /* Archive Banner */
 .archive-banner {
   background: #d8d958;
-  border-bottom: 1px solid #00373880;
   padding: 12px 24px;
 }
 
@@ -484,3 +483,106 @@ main {
 .pages-list::-webkit-scrollbar-thumb:hover {
   background: #003738;
 }
+/* Archive form layout: keep all controls in one line */
+.archive-form {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: nowrap;     /* prevents wrapping on desktop */
+  max-width: 900px;
+}
+
+/* URL input */
+.archive-form input[type="url"] {
+  flex: 1 1 auto;
+  min-width: 280px;
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid #00373880;
+  border-radius: 6px;
+  font-size: 14px;
+  background: #eeefd3;
+  color: #003738;
+}
+
+/* Archive button */
+.archive-form button {
+  height: 40px;
+  padding: 0 20px;
+  background: #d8d958;
+  color: #003738;
+  border: 1px solid #d8d958;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+/* Range wrapper */
+.range-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid #00373880;
+  border-radius: 6px;
+  padding: 0 10px;
+  height: 40px;
+  background: #eeefd3;
+}
+
+/* Range number (fixed width so it doesn’t shift) */
+.range-value {
+  display: inline-block;
+  min-width: 4ch;   /* enough room for 1000 */
+  text-align: right;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: #003738;
+}
+
+/* Range input */
+.range-wrap input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 150px;
+  height: 6px;
+  border-radius: 999px;
+  outline: none;
+  background: linear-gradient(90deg, #4dbd97, #d8d958); /* subtle gradient */
+}
+
+/* WebKit thumb */
+.range-wrap input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #003738;
+  border: 2px solid #e8e9bf; /* slight contrast ring */
+  cursor: pointer;
+}
+
+/* Firefox thumb */
+.range-wrap input[type="range"]::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #003738;
+  border: 2px solid #e8e9bf;
+  cursor: pointer;
+}
+
+/* Job selector */
+.job-selector select {
+  width: 100%;
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid #00373880;
+  border-radius: 6px;
+  font-size: 14px;
+  background: #eeefd3;
+  color: #003738;
+}
+
+
