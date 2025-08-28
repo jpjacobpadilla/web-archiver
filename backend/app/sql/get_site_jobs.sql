@@ -4,6 +4,6 @@ select
     count(ar.id) as page_count
 from archive_jobs aj
 join archived_resource ar on aj.id = ar.scraping_job
-where ar.host = %(host)s ar.content_type= 'text/html;'
+where ar.host = %(host)s and ar.content_type = 'text/html; charset=utf-8'
 group by aj.id, aj.time_started
 order by aj.time_started desc;

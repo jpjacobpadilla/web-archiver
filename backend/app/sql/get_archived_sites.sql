@@ -5,6 +5,6 @@ select
     count(distinct aj.id) as job_count
 from archived_resource ar
 join archive_jobs aj on ar.scraping_job = aj.id
-where ar.content_type = 'text/html;'
+where ar.content_type = 'text/html; charset=utf-8'
 group by ar.host
 order by latest_job_time desc;
