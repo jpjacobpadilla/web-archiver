@@ -1,16 +1,31 @@
+import re
+from typing import List, Optional
+from datetime import datetime, timezone
+from contextlib import asynccontextmanager
+from urllib.parse import urlsplit, urlunsplit, quote, unquote
+
+from psycopg_pool import AsyncConnectionPool
+from psycopg.rows import dict_row
+
+from bs4 import BeautifulSoup
+
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
-from typing import List, Optional
-from datetime import datetime, timezone
-import re
-from urllib.parse import urlsplit, urlunsplit, quote, unquote
-from psycopg_pool import AsyncConnectionPool
-from psycopg.rows import dict_row
-from bs4 import BeautifulSoup
 
 
-app = FastAPI(title='Web Archiver API')
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await pool.open()
+
+    try:
+        yield
+    finally:
+        if pool:
+            await pool.close()
+
+
+app = FastAPI(title='Web Archiver API', lifespan=lifespan)
 
 # CORS middleware
 app.add_middleware(
@@ -24,17 +39,6 @@ app.add_middleware(
 # Database connection
 PG_URI = 'postgresql://app_user:dev_password@localhost:5432/app_db'
 pool = AsyncConnectionPool(PG_URI, open=False)
-
-
-@app.on_event('startup')
-async def startup():
-    await pool.open()
-
-
-@app.on_event('shutdown')
-async def shutdown():
-    if pool:
-        await pool.close()
 
 
 # Regex patterns
