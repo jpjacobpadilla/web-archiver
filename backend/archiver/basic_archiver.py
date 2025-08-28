@@ -12,18 +12,13 @@ from psycopg_pool import AsyncConnectionPool
 # CSS url(...) finder regex
 CSS_URL_RE = re.compile(r"url\(\s*(['\"]?)(?!data:)(?!about:)([^'\"\)]*)\1\s*\)", re.IGNORECASE)
 
-SQL_DIR = Path(__file__).parent / "sql"
-SQL_INSERT_JOB = (SQL_DIR / "insert_job.sql").read_text(encoding="utf-8")
-SQL_ARCHIVE_CONTENT = (SQL_DIR / "archive_content.sql").read_text(encoding="utf-8")
+SQL_DIR = Path(__file__).parent / 'sql'
+SQL_INSERT_JOB = (SQL_DIR / 'insert_job.sql').read_text(encoding='utf-8')
+SQL_ARCHIVE_CONTENT = (SQL_DIR / 'archive_content.sql').read_text(encoding='utf-8')
+
 
 class BasicArchiver:
-    def __init__(
-        self,
-        pg_pool: AsyncConnectionPool,
-        url: str,
-        num_workers: int = 5,
-        max_pages: int = 10
-    ):
+    def __init__(self, pg_pool: AsyncConnectionPool, url: str, num_workers: int = 5, max_pages: int = 10):
         """
         Args:
             pg_pool: Psycopg connection pool instance

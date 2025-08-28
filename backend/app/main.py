@@ -17,13 +17,12 @@ from app.schemas import ArchiveRequest, ArchivedSite, ArchiveJob, ArchivedPage
 from archiver import BasicArchiver
 
 
-
-SQL_DIR = Path(__file__).parent / "sql"
-SQL_GET_ARCHIVED_SITES = (SQL_DIR / "get_archived_sites.sql").read_text(encoding="utf-8")
-SQL_GET_SITE_JOBS = (SQL_DIR / "get_site_jobs.sql").read_text(encoding="utf-8")
-SQL_GET_JOB_PAGES = (SQL_DIR / "get_job_pages.sql").read_text(encoding="utf-8")
-SQL_DEBUG_QUERY = (SQL_DIR / "debug_available_url.sql").read_text(encoding="utf-8")
-SQL_FETCH_CONTENT = (SQL_DIR / "get_content.sql").read_text(encoding="utf-8")
+SQL_DIR = Path(__file__).parent / 'sql'
+SQL_GET_ARCHIVED_SITES = (SQL_DIR / 'get_archived_sites.sql').read_text(encoding='utf-8')
+SQL_GET_SITE_JOBS = (SQL_DIR / 'get_site_jobs.sql').read_text(encoding='utf-8')
+SQL_GET_JOB_PAGES = (SQL_DIR / 'get_job_pages.sql').read_text(encoding='utf-8')
+SQL_DEBUG_QUERY = (SQL_DIR / 'debug_available_url.sql').read_text(encoding='utf-8')
+SQL_FETCH_CONTENT = (SQL_DIR / 'get_content.sql').read_text(encoding='utf-8')
 
 
 @asynccontextmanager
@@ -59,6 +58,7 @@ WB_REFERER_RE = re.compile(
     r'/web/(?P<ts>\d{14})(?P<mod>[a-z]{2}_)?/https?%3A%2F%2F(?P<host>[^/%\?]+)',
     re.IGNORECASE,
 )
+
 
 def _wb_ts_from_iso(dt_str: str) -> str:
     """Convert ISO datetime string to 14-digit Wayback timestamp."""
@@ -189,7 +189,7 @@ async def get_site_jobs(host: str):
     """Get all archive jobs for a specific host."""
     async with pool.connection() as conn:
         async with conn.cursor(row_factory=dict_row) as cur:
-            await cur.execute(SQL_GET_SITE_JOBS, {"host": host})
+            await cur.execute(SQL_GET_SITE_JOBS, {'host': host})
             rows = await cur.fetchall()
             return [
                 ArchiveJob(
@@ -275,7 +275,8 @@ async def run_archive(pool: AsyncConnectionPool, url: str, max_pages: int, num_w
     )
     await archiver.run()
 
-@app.post("/archive")
+
+@app.post('/archive')
 async def trigger_archive(request: ArchiveRequest):
     """
     Trigger a new archive of the given URL. Schedules work and returns immediately.
@@ -294,8 +295,8 @@ async def trigger_archive(request: ArchiveRequest):
         )
 
         return {
-            "message": f"archive scheduled for {request.url}",
-            "status": "scheduled",
+            'message': f'archive scheduled for {request.url}',
+            'status': 'scheduled',
         }
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"archive failed to schedule: {e}")
+        raise HTTPException(status_code=500, detail=f'archive failed to schedule: {e}')
