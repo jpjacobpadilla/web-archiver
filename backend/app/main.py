@@ -1,7 +1,6 @@
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
-from pydantic import BaseModel
 from typing import List, Optional
 from datetime import datetime, timezone
 import re
@@ -36,35 +35,6 @@ async def startup():
 async def shutdown():
     if pool:
         await pool.close()
-
-
-# Data models
-class ArchiveRequest(BaseModel):
-    url: str
-    max_pages: Optional[int] = 25
-    num_workers: Optional[int] = 8
-
-
-class ArchivedSite(BaseModel):
-    host: str
-    latest_job_time: datetime
-    page_count: int
-    job_count: int
-
-
-class ArchiveJob(BaseModel):
-    id: int
-    time_started: datetime
-    page_count: int
-
-
-class ArchivedPage(BaseModel):
-    id: int
-    link: str
-    host: str
-    status_code: Optional[int]
-    content_type: Optional[str]
-    content_length: Optional[int]
 
 
 # Regex patterns
