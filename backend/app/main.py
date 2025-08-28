@@ -1,4 +1,5 @@
 import re
+from pathlib import Path
 from typing import List, Optional
 from datetime import datetime, timezone
 from contextlib import asynccontextmanager
@@ -7,11 +8,18 @@ from urllib.parse import urlsplit, urlunsplit, quote, unquote
 from psycopg_pool import AsyncConnectionPool
 from psycopg.rows import dict_row
 from bs4 import BeautifulSoup
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 
 from schemas import ArchiveRequest, ArchivedSite, ArchiveJob, ArchivedPage
+
+
+SQL_DIR = Path(__file__).parent / "sql"
+SQL_GET_ARCHIVED_SITES = (SQL_DIR / "get_archived_sites.sql").read_text(encoding="utf-8")
+SQL_GET_SITE_JOBS = (SQL_DIR / "get_site_jobs.sql").read_text(encoding="utf-8")
+SQL_GET_JOB_PAGES = (SQL_DIR / "get_job_pages.sql").read_text(encoding="utf-8")
+SQL_DEBUG_QUERY = (SQL_DIR / "debug_available_url.sql").read_text(encoding="utf-8")
 
 
 @asynccontextmanager
@@ -160,25 +168,12 @@ def _normalize_bytes(raw):
     return bytes(raw)
 
 
-# API Endpoints
 @app.get('/archived-sites', response_model=List[ArchivedSite])
 async def get_archived_sites():
     """Get all archived sites with their latest archive job."""
     async with pool.connection() as conn:
         async with conn.cursor(row_factory=dict_row) as cur:
-            query = """
-                    SELECT ar.host, \
-                           MAX(aj.time_started)  AS latest_job_time, \
-                           COUNT(DISTINCT ar.id) AS page_count, \
-                           COUNT(DISTINCT aj.id) AS job_count
-                    FROM archived_resource ar
-                             JOIN archive_jobs aj ON ar.scraping_job = aj.id
-                    WHERE ar.content_type LIKE 'text/html%%' \
-                       OR ar.content_type = 'text/html'
-                    GROUP BY ar.host
-                    ORDER BY latest_job_time DESC \
-                    """
-            await cur.execute(query)
+            await cur.execute(SQL_GET_ARCHIVED_SITES)
             rows = await cur.fetchall()
             return [
                 ArchivedSite(
@@ -196,18 +191,7 @@ async def get_site_jobs(host: str):
     """Get all archive jobs for a specific host."""
     async with pool.connection() as conn:
         async with conn.cursor(row_factory=dict_row) as cur:
-            query = """
-                    SELECT aj.id, \
-                           aj.time_started, \
-                           COUNT(ar.id) AS page_count
-                    FROM archive_jobs aj
-                             JOIN archived_resource ar ON aj.id = ar.scraping_job
-                    WHERE ar.host = %s
-                      AND (ar.content_type LIKE 'text/html%%' OR ar.content_type = 'text/html')
-                    GROUP BY aj.id, aj.time_started
-                    ORDER BY aj.time_started DESC \
-                    """
-            await cur.execute(query, (host,))
+            await cur.execute(SQL_GET_SITE_JOBS, {'host': host})
             rows = await cur.fetchall()
             return [
                 ArchiveJob(
@@ -224,15 +208,7 @@ async def get_job_pages(host: str, job_id: int):
     """Get all archived pages for a specific job."""
     async with pool.connection() as conn:
         async with conn.cursor(row_factory=dict_row) as cur:
-            query = """
-                    SELECT id, link, host, status_code, content_type, content_length
-                    FROM archived_resource
-                    WHERE host = %s
-                      AND scraping_job = %s
-                      AND (content_type LIKE 'text/html%%' OR content_type = 'text/html')
-                    ORDER BY link \
-                    """
-            await cur.execute(query, (host, job_id))
+            await cur.execute(SQL_GET_JOB_PAGES, {'host': host, 'job_id': job_id})
             rows = await cur.fetchall()
             return [
                 ArchivedPage(
@@ -275,8 +251,7 @@ async def web_wayback(job_and_mod: str, original_url: str):
         # Try to find what URLs we do have for this job
         async with pool.connection() as conn:
             async with conn.cursor(row_factory=dict_row) as cur:
-                debug_query = 'SELECT link FROM archived_resource WHERE scraping_job = %s LIMIT 10'
-                await cur.execute(debug_query, (job_id,))
+                await cur.execute(SQL_DEBUG_QUERY, {'job_id': job_id})
                 available_urls = await cur.fetchall()
                 print(f'Available URLs for job {job_id}: {[r["link"] for r in available_urls]}')
 
@@ -310,100 +285,97 @@ async def trigger_archive(request: ArchiveRequest):
 
         return {
             'message': f'Archive triggered for {request.url}',
-            'status': 'started',
-            'job_id': job_id,
-            'max_pages': request.max_pages,
-            'num_workers': request.num_workers,
+            'status': 'scheduled'
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f'Archive failed: {str(e)}')
 
 
-# Asset fallback routes
-@app.get('/static/{path:path}')
-async def static_fallback(path: str, request: Request):
-    """Handle static asset requests from archived pages."""
-    referer = request.headers.get('referer', '')
-    job_match = re.search(r'/web/(\d+)[^/]*/', referer)
-    if not job_match:
-        raise HTTPException(status_code=404, detail='Static asset not found')
-
-    job_id = int(job_match.group(1))
-
-    # Extract host from referer
-    host_match = re.search(r'https?%3A%2F%2F([^/%\?]+)', referer)
-    if not host_match:
-        raise HTTPException(status_code=404, detail='Cannot determine host')
-
-    host = unquote(host_match.group(1))
-    absolute_url = f'https://{host}/static/{path}'
-
-    row = await _fetch_from_db(job_id, absolute_url)
-    if not row:
-        raise HTTPException(status_code=404, detail='Archived static asset not found')
-
-    raw = _normalize_bytes(row['content'])
-    return Response(content=raw, media_type=row['content_type'] or 'application/octet-stream')
-
-
-@app.get('/favicon.ico')
-async def favicon_fallback(request: Request):
-    """Handle favicon requests from archived pages."""
-    referer = request.headers.get('referer', '')
-    job_match = re.search(r'/web/(\d+)[^/]*/', referer)
-    if not job_match:
-        raise HTTPException(status_code=404, detail='Favicon not found')
-
-    job_id = int(job_match.group(1))
-
-    # Extract host from referer
-    host_match = re.search(r'https?%3A%2F%2F([^/%\?]+)', referer)
-    if not host_match:
-        raise HTTPException(status_code=404, detail='Cannot determine host')
-
-    host = unquote(host_match.group(1))
-    absolute_url = f'https://{host}/favicon.ico'
-
-    row = await _fetch_from_db(job_id, absolute_url)
-    if not row:
-        raise HTTPException(status_code=404, detail='Archived favicon not found')
-
-    raw = _normalize_bytes(row['content'])
-    return Response(content=raw, media_type=row['content_type'] or 'image/x-icon')
-
-
-# General asset fallback route
-@app.get('/{path:path}')
-async def general_fallback(path: str, request: Request):
-    """Handle any other asset requests by looking at referer."""
-    # Skip API endpoints
-    if path.startswith(('archived-sites', 'archive', 'web/')):
-        raise HTTPException(status_code=404, detail='Not found')
-
-    referer = request.headers.get('referer', '')
-    job_match = re.search(r'/web/(\d+)[^/]*/', referer)
-    if not job_match:
-        raise HTTPException(status_code=404, detail=f'Asset not found: /{path}')
-
-    job_id = int(job_match.group(1))
-
-    # Extract host from referer
-    host_match = re.search(r'https?%3A%2F%2F([^/%\?]+)', referer)
-    if not host_match:
-        raise HTTPException(status_code=404, detail='Cannot determine host')
-
-    host = unquote(host_match.group(1))
-    absolute_url = f'https://{host}/{path}'
-
-    row = await _fetch_from_db(job_id, absolute_url)
-    if not row:
-        raise HTTPException(status_code=404, detail=f'Archived asset not found: /{path}')
-
-    raw = _normalize_bytes(row['content'])
-    return Response(content=raw, media_type=row['content_type'] or 'application/octet-stream')
-
-
-if __name__ == '__main__':
-    import uvicorn
-
-    uvicorn.run(app, host='0.0.0.0', port=8000)
+# # Asset fallback routes
+# @app.get('/static/{path:path}')
+# async def static_fallback(path: str, request: Request):
+#     """Handle static asset requests from archived pages."""
+#     referer = request.headers.get('referer', '')
+#     job_match = re.search(r'/web/(\d+)[^/]*/', referer)
+#     if not job_match:
+#         raise HTTPException(status_code=404, detail='Static asset not found')
+#
+#     job_id = int(job_match.group(1))
+#
+#     # Extract host from referer
+#     host_match = re.search(r'https?%3A%2F%2F([^/%\?]+)', referer)
+#     if not host_match:
+#         raise HTTPException(status_code=404, detail='Cannot determine host')
+#
+#     host = unquote(host_match.group(1))
+#     absolute_url = f'https://{host}/static/{path}'
+#
+#     row = await _fetch_from_db(job_id, absolute_url)
+#     if not row:
+#         raise HTTPException(status_code=404, detail='Archived static asset not found')
+#
+#     raw = _normalize_bytes(row['content'])
+#     return Response(content=raw, media_type=row['content_type'] or 'application/octet-stream')
+#
+#
+# @app.get('/favicon.ico')
+# async def favicon_fallback(request: Request):
+#     """Handle favicon requests from archived pages."""
+#     referer = request.headers.get('referer', '')
+#     job_match = re.search(r'/web/(\d+)[^/]*/', referer)
+#     if not job_match:
+#         raise HTTPException(status_code=404, detail='Favicon not found')
+#
+#     job_id = int(job_match.group(1))
+#
+#     # Extract host from referer
+#     host_match = re.search(r'https?%3A%2F%2F([^/%\?]+)', referer)
+#     if not host_match:
+#         raise HTTPException(status_code=404, detail='Cannot determine host')
+#
+#     host = unquote(host_match.group(1))
+#     absolute_url = f'https://{host}/favicon.ico'
+#
+#     row = await _fetch_from_db(job_id, absolute_url)
+#     if not row:
+#         raise HTTPException(status_code=404, detail='Archived favicon not found')
+#
+#     raw = _normalize_bytes(row['content'])
+#     return Response(content=raw, media_type=row['content_type'] or 'image/x-icon')
+#
+#
+# # General asset fallback route
+# @app.get('/{path:path}')
+# async def general_fallback(path: str, request: Request):
+#     """Handle any other asset requests by looking at referer."""
+#     # Skip API endpoints
+#     if path.startswith(('archived-sites', 'archive', 'web/')):
+#         raise HTTPException(status_code=404, detail='Not found')
+#
+#     referer = request.headers.get('referer', '')
+#     job_match = re.search(r'/web/(\d+)[^/]*/', referer)
+#     if not job_match:
+#         raise HTTPException(status_code=404, detail=f'Asset not found: /{path}')
+#
+#     job_id = int(job_match.group(1))
+#
+#     # Extract host from referer
+#     host_match = re.search(r'https?%3A%2F%2F([^/%\?]+)', referer)
+#     if not host_match:
+#         raise HTTPException(status_code=404, detail='Cannot determine host')
+#
+#     host = unquote(host_match.group(1))
+#     absolute_url = f'https://{host}/{path}'
+#
+#     row = await _fetch_from_db(job_id, absolute_url)
+#     if not row:
+#         raise HTTPException(status_code=404, detail=f'Archived asset not found: /{path}')
+#
+#     raw = _normalize_bytes(row['content'])
+#     return Response(content=raw, media_type=row['content_type'] or 'application/octet-stream')
+#
+#
+# if __name__ == '__main__':
+#     import uvicorn
+#
+#     uvicorn.run(app, host='0.0.0.0', port=8000)
