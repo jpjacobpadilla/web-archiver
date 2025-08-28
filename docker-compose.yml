@@ -1,0 +1,31 @@
+# docker-compose.yml
+version: "3.9"
+
+include:
+  - path: ./data/docker-compose.yml
+
+services:
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: archive_api
+    environment:
+      PG_URI: postgresql://${POSTGRES_USER:-app_user}:${POSTGRES_PASSWORD:-dev_password}@db:5432/${POSTGRES_DB:-app_db}
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8001:8001"
+    restart: unless-stopped
+
+  web:
+    build:
+      context: ./frontend/web-archiver
+      dockerfile: Dockerfile
+    container_name: archive_frontend
+    depends_on:
+      - api
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
