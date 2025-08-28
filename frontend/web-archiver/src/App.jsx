@@ -84,8 +84,7 @@ function App() {
       });
 
       if (response.ok) {
-        const result = await response.json();
-        alert(`Archive started! Job ID: ${result.job_id}`);
+        alert('Archive started!');
         setNewUrl('');
         setTimeout(fetchArchivedSites, 5000);
       } else {
