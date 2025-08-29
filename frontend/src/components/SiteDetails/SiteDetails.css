@@ -1,0 +1,183 @@
+@import '../../styles/variables.css';
+
+.site-details {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-bg-medium);
+  overflow: hidden;
+}
+
+.site-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-xl) var(--spacing-2xl);
+  border-bottom: 1px solid var(--color-primary-80);
+}
+
+.site-header h2 {
+  font-size: var(--font-size-xl);
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+/* Job Selector */
+.job-selector {
+  padding: var(--spacing-xl) var(--spacing-2xl);
+  border-bottom: 1px solid var(--color-primary-80);
+}
+
+.job-selector h3 {
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  color: var(--color-primary);
+  margin-bottom: var(--spacing-sm);
+}
+
+.job-selector select {
+  width: 100%;
+  height: 40px;
+  padding: 0 40px 0 var(--spacing-md);
+  border: 1px solid var(--color-primary-80);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-base);
+  background: var(--color-bg-light);
+  color: var(--color-primary);
+
+  /* Remove default arrows */
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+
+  /* Add custom arrow */
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path fill='%23003738' d='M1 1l5 5 5-5'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right var(--spacing-md) center;
+  background-size: 12px 8px;
+}
+
+.job-selector select:focus {
+  outline: none;
+  border-color: var(--color-success);
+  box-shadow: 0 0 0 2px rgba(77, 189, 151, 0.2);
+}
+
+/* Pages Section */
+.pages-section {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.pages-section h3 {
+  padding: var(--spacing-xl) var(--spacing-2xl) var(--spacing-lg);
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+.pages-list {
+  flex: 1;
+  overflow-y: auto;
+  list-style: none;
+  padding: 0 var(--spacing-2xl) var(--spacing-2xl);
+}
+
+.page-item {
+  margin-bottom: var(--spacing-md);
+}
+
+.page-info {
+  background: var(--color-bg-light);
+  border: 1px solid var(--color-primary-80);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.page-link {
+  display: block;
+  width: 100%;
+  padding: var(--spacing-md) var(--spacing-lg);
+  background: none;
+  border: none;
+  text-align: left;
+  font-size: var(--font-size-base);
+  color: var(--color-primary);
+  cursor: pointer;
+  transition: background 0.15s ease;
+  word-break: break-all;
+}
+
+.page-link:hover {
+  background: var(--color-accent);
+}
+
+.page-meta {
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border-top: 1px solid var(--color-primary-80);
+  display: flex;
+  gap: var(--spacing-md);
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.status-code {
+  padding: 2px var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.status-success {
+  background-color: var(--color-success);
+  color: var(--color-primary);
+}
+
+.status-redirect {
+  background-color: var(--color-accent);
+  color: var(--color-primary);
+}
+
+.status-error {
+  background-color: var(--color-primary);
+  color: var(--color-bg-medium);
+}
+
+.content-type,
+.content-length {
+  font-size: var(--font-size-xs);
+  color: var(--color-primary);
+  opacity: 0.8;
+}
+
+/* No Selection State */
+.no-selection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+  padding: 40px;
+}
+
+.no-selection h2 {
+  font-size: var(--font-size-xl);
+  font-weight: 600;
+  color: var(--color-primary);
+  margin-bottom: var(--spacing-sm);
+}
+
+.no-selection p {
+  font-size: var(--font-size-base);
+  color: var(--color-primary);
+  opacity: 0.8;
+}
+
+/* Apply scrollbar styling */
+.pages-list {
+  composes: scrollable from '../../globals.css';
+}

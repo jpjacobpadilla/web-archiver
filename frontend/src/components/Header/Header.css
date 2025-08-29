@@ -1,0 +1,61 @@
+@import '../../styles/variables.css';
+
+header {
+  background: var(--color-bg-medium);
+  border-bottom: 1px solid var(--color-primary-80);
+  padding: var(--spacing-lg) var(--spacing-2xl);
+  flex-shrink: 0;
+}
+
+header h1 {
+  font-size: var(--font-size-2xl);
+  font-weight: 600;
+  color: var(--color-primary);
+  margin-bottom: var(--spacing-xs);
+}
+
+header p {
+  font-size: var(--font-size-base);
+  color: var(--color-primary);
+  opacity: 0.8;
+}
+
+/* Archive Banner */
+.archive-banner {
+  background: var(--color-accent);
+  padding: var(--spacing-md) var(--spacing-2xl);
+  margin-top: 2vh;
+}
+
+.banner-content {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-lg);
+  justify-content: space-between;
+}
+
+.time-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.archive-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  min-width: 300px;
+}
+
+.url-info {
+  font-size: var(--font-size-base);
+  font-weight: 500;
+  color: var(--color-primary);
+}
+
+.date-info {
+  font-size: var(--font-size-sm);
+  color: var(--color-primary);
+  opacity: 0.8;
+}

@@ -1,5 +1,6 @@
 import React from 'react';
-import { archiveService } from '../services/ArchiveService';
+import './SiteDetails.css';
+import { archiveService } from '../../services/ArchiveService';
 
 class SiteDetailsComponent extends React.Component {
   handleJobChange = (e) => {

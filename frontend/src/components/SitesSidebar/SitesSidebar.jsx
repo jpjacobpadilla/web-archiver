@@ -1,5 +1,6 @@
 import React from 'react';
-import { archiveService } from '../services/ArchiveService';
+import './SitesSidebar.css';
+import { archiveService } from '../../services/ArchiveService';
 
 class SitesSidebarComponent extends React.Component {
   renderSiteItem = (site) => {

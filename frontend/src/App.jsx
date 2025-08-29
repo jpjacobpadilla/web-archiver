@@ -2,10 +2,10 @@ import React from 'react';
 import { useArchiveData } from './hooks/useArchiveData';
 import { archiveService } from './services/ArchiveService';
 import { ViewingPage } from './models/ViewingPage';
-import HeaderComponent from './components/Header';
-import ArchiveFormComponent from './components/ArchiveForm';
-import SitesSidebarComponent from './components/SitesSidebar';
-import SiteDetailsComponent from './components/SiteDetails';
+import HeaderComponent from './components/Header/Header.jsx';
+import ArchiveFormComponent from './components/ArchiveForm/ArchiveForm.jsx';
+import SitesSidebarComponent from './components/SitesSidebar/SitesSidebar.jsx';
+import SiteDetailsComponent from './components/SiteDetails/SiteDetails.jsx';
 import './App.css';
 
 class UrlManager {
