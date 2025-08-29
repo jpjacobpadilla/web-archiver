@@ -243,7 +243,6 @@ async def get_job_pages(host: str, job_id: int):
 @app.get('/web/{job_and_mod}/{original_url:path}')
 async def web_wayback(job_and_mod: str, original_url: str):
     """Serve archived web pages and resources by job ID."""
-    print(original_url)
     # Parse job ID and modifier
     if job_and_mod.isdigit():
         job_id = int(job_and_mod)
