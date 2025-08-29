@@ -1,6 +1,3 @@
-# docker-compose.yml
-version: "3.9"
-
 include:
   - path: ./data/docker-compose.yml
 
