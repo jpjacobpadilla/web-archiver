@@ -19,3 +19,7 @@ After cloning the repository, simply start the project with the following comman
 Access the services:
    * **Frontend:** [http://localhost:8000](http://localhost:8000)
    * **API:** [http://localhost:8001](http://localhost:8001)
+
+
+![img.png](img.png)
+![img_1.png](img_1.png)
