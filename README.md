@@ -5,7 +5,7 @@ This project provides a simple archiving solution for the web.
 It includes three main components:
 
 - **Database** (Postgres)
-- **API** (FastAPI backend)
+- **API** (FastAPI backend with an Async crawler)
 - **Web** (React + Nginx frontend)
 
 
