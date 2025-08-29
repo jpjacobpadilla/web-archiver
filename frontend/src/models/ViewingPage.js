@@ -22,7 +22,7 @@ export class ViewingPage {
     });
   }
 
-  updateForJob(job, archiveService) {
+  updateForJob(job, jobs, archiveService) {
     const encodedUrl = encodeURIComponent(this.originalUrl);
     const url = archiveService.getArchivedPageUrl(job.id, encodedUrl);
 
@@ -32,7 +32,7 @@ export class ViewingPage {
       timestamp: job.time_started,
       host: this.host,
       jobId: job.id,
-      currentJobIndex: this.currentJobIndex,
+      currentJobIndex: jobs.findIndex(j => j.id === job.id),
     });
   }
 

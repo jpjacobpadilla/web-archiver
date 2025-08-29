@@ -52,11 +52,18 @@ function App() {
 
     if (host && archivedSites.length > 0) {
       const site = archivedSites.find(s => s.host === host);
-      if (site) {
+      if (site && (!selectedSite || selectedSite.host !== host)) {
         handleSiteSelect(site, jobId, pageUrl);
+      } else if (site && selectedSite && selectedSite.host === host && pageUrl && !viewingPage) {
+        // Handle direct URL access to a page when site is already selected
+        const job = jobId ? archiveJobs.find(j => j.id === parseInt(jobId)) : selectedJob;
+        if (job && sitePages.length > 0) {
+          const page = { link: decodeURIComponent(pageUrl) };
+          openArchivedPage(page, job, archiveJobs);
+        }
       }
     }
-  }, [archivedSites]);
+  }, [archivedSites, selectedSite, archiveJobs, selectedJob, sitePages, viewingPage]);
 
   const handleSiteSelect = async (site, targetJobId = null, targetPageUrl = null) => {
     setSelectedSite(site);
@@ -72,19 +79,25 @@ function App() {
         if (targetPageUrl) {
           const page = { link: decodeURIComponent(targetPageUrl) };
           openArchivedPage(page, job, jobs);
+          return; // Don't update URL again
         }
       }
     }
 
-    if (!targetPageUrl) {
-      UrlManager.updateUrl(site.host, targetJobId || (jobs[0] && jobs[0].id), null);
-    }
+    UrlManager.updateUrl(site.host, targetJobId || (jobs[0] && jobs[0].id), null);
   };
 
   const handleJobChange = (job) => {
     setSelectedJob(job);
     fetchJobPages(selectedSite.host, job.id);
     UrlManager.updateUrl(selectedSite.host, job.id, null);
+
+    // If we're currently viewing a page, update the viewing page to the new job
+    if (viewingPage) {
+      const updatedViewingPage = viewingPage.updateForJob(job, archiveJobs, archiveService);
+      setViewingPage(updatedViewingPage);
+      UrlManager.updateUrl(selectedSite.host, job.id, encodeURIComponent(viewingPage.originalUrl));
+    }
   };
 
   const handleReArchive = async () => {
