@@ -41,7 +41,7 @@ app = FastAPI(title='Web Archiver API', lifespan=lifespan)
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=['http://localhost:5173'],  # Vite default port
+    allow_origins=['http://127.0.0.1:8000'],
     allow_credentials=True,
     allow_methods=['*'],
     allow_headers=['*'],
@@ -166,6 +166,25 @@ def _normalize_bytes(raw):
     return bytes(raw)
 
 
+def _fix_single_slash(u: str) -> str:
+    u = (u or "").strip()
+    if u.startswith("https:/") and not u.startswith("https://"):
+        return "https://" + u[len("https:/"):]
+    if u.startswith("http:/") and not u.startswith("http://"):
+        return "http://" + u[len("http:/"):]
+    return u
+
+
+def _normalize_absolute(u: str) -> str:
+    """Return a clean absolute URL if possible; otherwise the original string."""
+    u = _fix_single_slash(u)
+    p = urlsplit(u)
+    if p.scheme and p.hostname:
+        return urlunsplit(p)
+    return u
+
+
+
 @app.get('/archived-sites', response_model=list[ArchivedSite])
 async def get_archived_sites():
     """Get all archived sites with their latest archive job."""
@@ -234,7 +253,7 @@ async def web_wayback(job_and_mod: str, original_url: str):
             raise HTTPException(status_code=400, detail='Invalid job ID/modifier')
         job_id = int(match.group(1))
 
-    absolute_url = unquote(original_url)
+    absolute_url = _fix_single_slash(unquote(original_url))
     parsed = urlsplit(absolute_url)
     host = parsed.hostname
 
