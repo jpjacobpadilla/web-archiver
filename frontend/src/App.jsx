@@ -90,13 +90,15 @@ function App() {
   const handleJobChange = (job) => {
     setSelectedJob(job);
     fetchJobPages(selectedSite.host, job.id);
-    UrlManager.updateUrl(selectedSite.host, job.id, null);
 
     // If we're currently viewing a page, update the viewing page to the new job
     if (viewingPage) {
       const updatedViewingPage = viewingPage.updateForJob(job, archiveJobs, archiveService);
+      console.log('Job changed - new index:', updatedViewingPage.currentJobIndex, 'total jobs:', archiveJobs.length);
       setViewingPage(updatedViewingPage);
       UrlManager.updateUrl(selectedSite.host, job.id, encodeURIComponent(viewingPage.originalUrl));
+    } else {
+      UrlManager.updateUrl(selectedSite.host, job.id, null);
     }
   };
 

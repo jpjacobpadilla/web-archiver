@@ -52,9 +52,10 @@ export class ViewingPage {
     const url = archiveService.getArchivedPageUrl(olderJob.id, encodedUrl);
 
     return new ViewingPage({
-      ...this,
       url,
+      originalUrl: this.originalUrl,
       timestamp: olderJob.time_started,
+      host: this.host,
       jobId: olderJob.id,
       currentJobIndex: this.currentJobIndex + 1,
     });
@@ -68,9 +69,10 @@ export class ViewingPage {
     const url = archiveService.getArchivedPageUrl(newerJob.id, encodedUrl);
 
     return new ViewingPage({
-      ...this,
       url,
+      originalUrl: this.originalUrl,
       timestamp: newerJob.time_started,
+      host: this.host,
       jobId: newerJob.id,
       currentJobIndex: this.currentJobIndex - 1,
     });
