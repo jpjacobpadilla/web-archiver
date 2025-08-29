@@ -24,7 +24,7 @@ class UrlManager {
     return {
       host: params.get('host'),
       jobId: params.get('job'),
-      pageUrl: params.get('page')
+      pageUrl: params.get('page'),
     };
   }
 }
@@ -41,62 +41,98 @@ function App() {
     isArchiving,
     fetchSiteJobs,
     fetchJobPages,
-    startArchive
+    startArchive,
   } = useArchiveData();
 
   const [viewingPage, setViewingPage] = React.useState(null);
 
-  // URL routing effect
+  // navigation race protection
+  const [isNavigating, setIsNavigating] = React.useState(false);
+  const navigateReqId = React.useRef(0);
+
+  // URL routing effect (disabled while navigating to avoid "snap back")
   React.useEffect(() => {
+    if (isNavigating) return; // don't react to URL while we're changing it ourselves
+
     const { host, jobId, pageUrl } = UrlManager.getUrlParams();
 
     if (host && archivedSites.length > 0) {
-      const site = archivedSites.find(s => s.host === host);
+      const site = archivedSites.find((s) => s.host === host);
       if (site && (!selectedSite || selectedSite.host !== host)) {
         handleSiteSelect(site, jobId, pageUrl);
-      } else if (site && selectedSite && selectedSite.host === host && pageUrl && !viewingPage) {
+      } else if (
+        site &&
+        selectedSite &&
+        selectedSite.host === host &&
+        pageUrl &&
+        !viewingPage
+      ) {
         // Handle direct URL access to a page when site is already selected
-        const job = jobId ? archiveJobs.find(j => j.id === parseInt(jobId)) : selectedJob;
+        const job = jobId ? archiveJobs.find((j) => j.id === parseInt(jobId)) : selectedJob;
         if (job && sitePages.length > 0) {
           const page = { link: decodeURIComponent(pageUrl) };
           openArchivedPage(page, job, archiveJobs);
         }
       }
     }
-  }, [archivedSites, selectedSite, archiveJobs, selectedJob, sitePages, viewingPage]);
+  }, [archivedSites, selectedSite, archiveJobs, selectedJob, sitePages, viewingPage, isNavigating]);
 
+  // race-safe site selection
   const handleSiteSelect = async (site, targetJobId = null, targetPageUrl = null) => {
+    const reqId = ++navigateReqId.current;
+    setIsNavigating(true);
+
+    // Optimistically sync URL to the new host immediately so the URL effect doesn't yank us back
+    UrlManager.updateUrl(site.host, null, null);
+
+    setViewingPage(null); // prevent stale iframe flash
     setSelectedSite(site);
     setSelectedJob(null);
 
-    const jobs = await fetchSiteJobs(site.host);
-    if (jobs.length > 0) {
-      const job = targetJobId ? jobs.find(j => j.id === parseInt(targetJobId)) : jobs[0];
-      if (job) {
-        setSelectedJob(job);
-        await fetchJobPages(site.host, job.id);
+    try {
+      const jobs = await fetchSiteJobs(site.host);
+      if (reqId !== navigateReqId.current) return; // stale -> bail
 
-        if (targetPageUrl) {
-          const page = { link: decodeURIComponent(targetPageUrl) };
-          openArchivedPage(page, job, jobs);
-          return; // Don't update URL again
+      if (jobs.length > 0) {
+        const job = targetJobId ? jobs.find((j) => j.id === parseInt(targetJobId)) : jobs[0];
+        if (job) {
+          setSelectedJob(job);
+
+          await fetchJobPages(site.host, job.id);
+          if (reqId !== navigateReqId.current) return; // stale -> bail
+
+          if (targetPageUrl) {
+            const page = { link: decodeURIComponent(targetPageUrl) };
+            openArchivedPage(page, job, jobs);
+            return; // Don't update URL again; openArchivedPage already does it
+          }
+
+          // After pages load, update URL with job
+          UrlManager.updateUrl(site.host, job.id, null);
+          return;
         }
       }
-    }
 
-    UrlManager.updateUrl(site.host, targetJobId || (jobs[0] && jobs[0].id), null);
+      // No jobs found: still keep URL aligned with host only
+      UrlManager.updateUrl(site.host, null, null);
+    } finally {
+      if (reqId === navigateReqId.current) setIsNavigating(false);
+    }
   };
 
   const handleJobChange = (job) => {
+    if (isNavigating) return; // prevent changes mid-navigation
     setSelectedJob(job);
     fetchJobPages(selectedSite.host, job.id);
 
-    // If we're currently viewing a page, update the viewing page to the new job
     if (viewingPage) {
       const updatedViewingPage = viewingPage.updateForJob(job, archiveJobs, archiveService);
-      console.log('Job changed - new index:', updatedViewingPage.currentJobIndex, 'total jobs:', archiveJobs.length);
       setViewingPage(updatedViewingPage);
-      UrlManager.updateUrl(selectedSite.host, job.id, encodeURIComponent(viewingPage.originalUrl));
+      UrlManager.updateUrl(
+        selectedSite.host,
+        job.id,
+        encodeURIComponent(viewingPage.originalUrl)
+      );
     } else {
       UrlManager.updateUrl(selectedSite.host, job.id, null);
     }
@@ -114,7 +150,13 @@ function App() {
   };
 
   const openArchivedPage = (page, job = selectedJob, jobs = archiveJobs) => {
-    const pageData = ViewingPage.fromPageAndJob(page, job, jobs, archiveService, selectedSite.host);
+    const pageData = ViewingPage.fromPageAndJob(
+      page,
+      job,
+      jobs,
+      archiveService,
+      selectedSite.host
+    );
     setViewingPage(pageData);
     UrlManager.updateUrl(selectedSite.host, job.id, encodeURIComponent(page.link));
   };
@@ -124,7 +166,11 @@ function App() {
 
     const newPageData = viewingPage.goBack(archiveJobs, archiveService);
     setViewingPage(newPageData);
-    UrlManager.updateUrl(selectedSite.host, newPageData.jobId, encodeURIComponent(viewingPage.originalUrl));
+    UrlManager.updateUrl(
+      selectedSite.host,
+      newPageData.jobId,
+      encodeURIComponent(viewingPage.originalUrl)
+    );
   };
 
   const goForwardInTime = () => {
@@ -132,12 +178,16 @@ function App() {
 
     const newPageData = viewingPage.goForward(archiveJobs, archiveService);
     setViewingPage(newPageData);
-    UrlManager.updateUrl(selectedSite.host, newPageData.jobId, encodeURIComponent(viewingPage.originalUrl));
+    UrlManager.updateUrl(
+      selectedSite.host,
+      newPageData.jobId,
+      encodeURIComponent(viewingPage.originalUrl)
+    );
   };
 
   const closeArchivedPage = () => {
     setViewingPage(null);
-    UrlManager.updateUrl(selectedSite.host, selectedJob?.id, null);
+    UrlManager.updateUrl(selectedSite?.host ?? null, selectedJob?.id ?? null, null);
   };
 
   return (
@@ -160,16 +210,18 @@ function App() {
         </div>
       ) : (
         <main>
-          <ArchiveFormComponent
-            onArchiveSubmit={startArchive}
-            isArchiving={isArchiving}
-          />
+          <ArchiveFormComponent onArchiveSubmit={startArchive} isArchiving={isArchiving} />
 
           <div className="content">
             <SitesSidebarComponent
               archivedSites={archivedSites}
               selectedSite={selectedSite}
-              onSiteSelect={handleSiteSelect}
+              onSiteSelect={(site) => {
+                // Ignore if already selected or we are navigating
+                if (isNavigating || (selectedSite && selectedSite.host === site.host)) return;
+                handleSiteSelect(site);
+              }}
+              disabled={isNavigating}
             />
 
             <SiteDetailsComponent

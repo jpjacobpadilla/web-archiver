@@ -4,14 +4,20 @@ import { archiveService } from '../../services/ArchiveService';
 
 class SitesSidebarComponent extends React.Component {
   renderSiteItem = (site) => {
-    const { selectedSite, onSiteSelect } = this.props;
+    const { selectedSite, onSiteSelect, disabled } = this.props;
     const isSelected = selectedSite?.host === site.host;
+
+    const handleClick = () => {
+      if (disabled || isSelected) return; // prevent spam + redundant selects
+      onSiteSelect(site);
+    };
 
     return (
       <li
         key={site.host}
-        className={isSelected ? 'selected' : ''}
-        onClick={() => onSiteSelect(site)}
+        className={`${isSelected ? 'selected' : ''} ${disabled ? 'disabled' : ''}`}
+        onClick={handleClick}
+        aria-disabled={disabled ? 'true' : 'false'}
       >
         <div className="site-info">
           <strong>{site.host}</strong>
