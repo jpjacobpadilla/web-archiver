@@ -53,11 +53,11 @@ pool = AsyncConnectionPool(PG_URI, open=False)
 
 
 # Regex patterns
-WB_STAMP_RE = re.compile(r'(\d{14})([a-z]{2}_)?')
-WB_REFERER_RE = re.compile(
-    r'/web/(?P<ts>\d{14})(?P<mod>[a-z]{2}_)?/https?%3A%2F%2F(?P<host>[^/%\?]+)',
-    re.IGNORECASE,
-)
+# WB_STAMP_RE = re.compile(r'(\d{14})([a-z]{2}_)?')
+# WB_REFERER_RE = re.compile(
+#     r'/web/(?P<ts>\d{14})(?P<mod>[a-z]{2}_)?/https?%3A%2F%2F(?P<host>[^/%\?]+)',
+#     re.IGNORECASE,
+# )
 
 
 def _wb_ts_from_iso(dt_str: str) -> str:
@@ -111,7 +111,7 @@ def _wb_path(job_id: int, full_url: str, kind: str = '') -> str:
         mod = 'js_'
 
     enc = quote(full_url, safe='')
-    return f'/web/{job_id}{mod}/{enc}'
+    return f'/api/web/{job_id}{mod}/{enc}'
 
 
 def rewrite_links_in_html(html_content: str, original_host: str, job_id: int) -> str:
@@ -243,6 +243,7 @@ async def get_job_pages(host: str, job_id: int):
 @app.get('/web/{job_and_mod}/{original_url:path}')
 async def web_wayback(job_and_mod: str, original_url: str):
     """Serve archived web pages and resources by job ID."""
+    print(original_url)
     # Parse job ID and modifier
     if job_and_mod.isdigit():
         job_id = int(job_and_mod)
@@ -253,7 +254,7 @@ async def web_wayback(job_and_mod: str, original_url: str):
             raise HTTPException(status_code=400, detail='Invalid job ID/modifier')
         job_id = int(match.group(1))
 
-    absolute_url = _fix_single_slash(unquote(original_url))
+    absolute_url = _normalize_absolute(unquote(original_url))
     parsed = urlsplit(absolute_url)
     host = parsed.hostname
 
