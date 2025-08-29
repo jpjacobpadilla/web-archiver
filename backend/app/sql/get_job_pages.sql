@@ -8,5 +8,5 @@ select
 from archived_resource
 where host = %(host)s
     and scraping_job = %(job_id)s
-    and content_type = 'text/html; charset=utf-8'
+    and content_type like %(ctx_type)s
 order by link;

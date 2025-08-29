@@ -208,7 +208,7 @@ async def get_site_jobs(host: str):
     """Get all archive jobs for a specific host."""
     async with pool.connection() as conn:
         async with conn.cursor(row_factory=dict_row) as cur:
-            await cur.execute(SQL_GET_SITE_JOBS, {'host': host})
+            await cur.execute(SQL_GET_SITE_JOBS, {'host': host, 'ctx_type': 'text/html%'})
             rows = await cur.fetchall()
             return [
                 ArchiveJob(
@@ -225,7 +225,7 @@ async def get_job_pages(host: str, job_id: int):
     """Get all archived pages for a specific job."""
     async with pool.connection() as conn:
         async with conn.cursor(row_factory=dict_row) as cur:
-            await cur.execute(SQL_GET_JOB_PAGES, {'host': host, 'job_id': job_id})
+            await cur.execute(SQL_GET_JOB_PAGES, {'host': host, 'job_id': job_id, 'ctx_type': 'text/html%'})
             rows = await cur.fetchall()
             return [
                 ArchivedPage(
@@ -286,6 +286,7 @@ async def web_wayback(job_and_mod: str, original_url: str):
 
 
 async def run_archive(pool: AsyncConnectionPool, url: str, max_pages: int, num_workers: int) -> None:
+    print('Starting archive on server.')
     archiver = BasicArchiver(
         pg_pool=pool,
         url=url,
