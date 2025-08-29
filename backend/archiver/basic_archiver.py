@@ -44,14 +44,10 @@ class BasicArchiver:
     def same_domain(self, u: str) -> bool:
         """
         Check if a URL belongs to the same domain as the initial URL.
-        Treats 'www.' and non-'www.' domains as equivalent.
         """
         p = urllib.parse.urlparse(u)
-        return (
-                p.scheme in {"http", "https"}
-                and re.sub(r"^www\.", "", p.netloc.lower())
-                == re.sub(r"^www\.", "", self._allowed_netloc)
-        )
+        return p.scheme in {'http', 'https'} and p.netloc.lower() == self._allowed_netloc
+
 
     @staticmethod
     def abs_url(base: str, u: str | None) -> str | None:
