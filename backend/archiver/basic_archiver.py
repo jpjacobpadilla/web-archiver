@@ -48,7 +48,6 @@ class BasicArchiver:
         p = urllib.parse.urlparse(u)
         return p.scheme in {'http', 'https'} and p.netloc.lower() == self._allowed_netloc
 
-
     @staticmethod
     def abs_url(base: str, u: str | None) -> str | None:
         """

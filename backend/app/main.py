@@ -52,14 +52,6 @@ PG_URI = os.environ['PG_URI']
 pool = AsyncConnectionPool(PG_URI, open=False)
 
 
-# Regex patterns
-# WB_STAMP_RE = re.compile(r'(\d{14})([a-z]{2}_)?')
-# WB_REFERER_RE = re.compile(
-#     r'/web/(?P<ts>\d{14})(?P<mod>[a-z]{2}_)?/https?%3A%2F%2F(?P<host>[^/%\?]+)',
-#     re.IGNORECASE,
-# )
-
-
 def _wb_ts_from_iso(dt_str: str) -> str:
     """Convert ISO datetime string to 14-digit Wayback timestamp."""
     if re.fullmatch(r'\d{14}', dt_str):
@@ -167,11 +159,11 @@ def _normalize_bytes(raw):
 
 
 def _fix_single_slash(u: str) -> str:
-    u = (u or "").strip()
-    if u.startswith("https:/") and not u.startswith("https://"):
-        return "https://" + u[len("https:/"):]
-    if u.startswith("http:/") and not u.startswith("http://"):
-        return "http://" + u[len("http:/"):]
+    u = (u or '').strip()
+    if u.startswith('https:/') and not u.startswith('https://'):
+        return 'https://' + u[len('https:/') :]
+    if u.startswith('http:/') and not u.startswith('http://'):
+        return 'http://' + u[len('http:/') :]
     return u
 
 
@@ -182,7 +174,6 @@ def _normalize_absolute(u: str) -> str:
     if p.scheme and p.hostname:
         return urlunsplit(p)
     return u
-
 
 
 @app.get('/archived-sites', response_model=list[ArchivedSite])
