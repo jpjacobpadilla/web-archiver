@@ -115,7 +115,7 @@ function App() {
 
       if (response.ok) {
         const result = await response.json();
-        alert(`Re-archive started! Job ID: ${result.job_id ?? 'N/A'}`);
+        alert('Re-archive started!');
         setTimeout(() => fetchSiteJobs(selectedSite.host), 5000);
       } else {
         alert('Failed to start re-archive');
