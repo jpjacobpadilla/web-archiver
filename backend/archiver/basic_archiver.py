@@ -160,7 +160,7 @@ class BasicArchiver:
         """
         headers = resp.headers or {}
         content = resp.content
-        link = resp.url or source_url
+        link = resp.request.url or source_url
 
         params = {
             'link': link,
@@ -265,12 +265,8 @@ class BasicArchiver:
         Uses a lock to prevent race conditions when multiple workers discover
         the same URLs simultaneously. Only adds URLs that haven't been seen before.
         """
-        formatted_urls = set()
-        for url in urls:
-            formatted_urls.add(url.removesuffix('/'))
-
         async with self._seen_lock:
-            new = formatted_urls - self.seen
+            new = urls - self.seen
             self.seen.update(new)
 
         for u in new:
